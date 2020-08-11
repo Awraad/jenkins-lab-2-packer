@@ -1,31 +1,27 @@
 pipeline {
-
-    agent {
-        docker {
-            image 'bryandollery/terraform-packer-aws-alpine'
-            args "-u root --entrypoint=''"
-        }
+  agent {
+    docker {
+      image "bryandollery/terraform-packer-aws-alpine"
+      args "-u root --entrypoint='' --rm"
     }
-
-       stages {
-         stage ('build') {
-            steps {
-             sh 'packer build packer.json'
-            }
-        }
-        stage ('test') {
-            steps {
-                sh "docker run --rm manifest-holder"
-            }
-        }
-        stage ('release') {
-            environment {
-                CREDS = credentials('amerah-creds')
-                AWS_ACCESS_KEY_ID = "$CREDS_USR"
-                AWS_SECRET_ACCESS_KEY = "$CREDS_PSW"
-                OWNER = 'amerah'
-                PROJECT_NAME = 'web-server'
-           }
   }
- } 
-} 
+  environment {
+    CREDS = credentials('amerh-creds')
+    AWS_ACCESS_KEY_ID = "${CREDS_USR}"
+    AWS_SECRET_ACCESS_KEY = "${CREDS_PSW}"
+    OWNER = 'amerah'
+    PROJECT_NAME = 'web-server'
+  }
+  stages {
+    stage("build") {
+      steps {
+        sh 'packer build packer.json'
+      }
+    }
+  }
+  post {
+    success {
+        build quietPeriod: 0, wait: false, job: 'bryan-jenkins-lab-2-tf'  
+    }
+  }
+}
