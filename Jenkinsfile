@@ -3,29 +3,14 @@ pipeline {
     agent {
         docker {
             image 'bryandollery/terraform-packer-aws-alpine'
-            args "-u root"
+            args "-u root --entrypoint=''"
         }
     }
-    stages {
-        stage ('generate manifest') {
+
+       stages {
+         stage ('build') {
             steps {
-                sh """
-cat <<EOF > ./manifest.txt
-name: ${JOB_NAME}
-time: ${currentBuild.startTimeInMillis}
-build #: ${BUILD_NUMBER}
-commit: ${GIT_COMMIT}
-url: ${GIT_URL}
-EOF
-"""
-            }
-        }
-        stage ('build') {
-            steps {
-                sh "docker build --tag manifest-holder:latest ."
-                sh "docker tag manifest-holder manifest-holder:${BUILD_NUMBER}"
-                sh "docker tag manifest-holder bryandollery/manifest-holder:latest"
-                sh "docker tag manifest-holder bryandollery/manifest-holder:${BUILD_NUMBER}"
+             sh 'packer build packer.json'
             }
         }
         stage ('test') {
@@ -36,13 +21,11 @@ EOF
         stage ('release') {
             environment {
                 CREDS = credentials('amerah-creds')
-            }
-            steps {
-                sh "whoami"
-                sh "docker login -u ${CREDS_USR} -p ${CREDS_PSW}"
-                sh "docker push bryandollery/manifest-holder:${BUILD_NUMBER}"
-                sh "docker push bryandollery/manifest-holder:latest"
-            }
-        }
-    }
+                AWS_ACCESS_KEY_ID = "$CREDS_USR"
+                AWS_SECRET_ACCESS_KEY = "$CREDS_PSW"
+                OWNER = 'amerah'
+                PROJECT_NAME = 'web-server'
+           }
+  }
+ } 
 } 
