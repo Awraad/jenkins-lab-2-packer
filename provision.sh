@@ -11,7 +11,7 @@ sudo chown ubuntu:ubuntu /home/ubuntu/api
 # Configure nginx container to boot with the machine
 sudo touch /etc/systemd/system/webserver.service
 sudo chmod a+rw /etc/systemd/system/webserver.service
-cat <<EOF > /etc/systemd/system/webserver.service
+cat <<EOF>> /etc/systemd/system/webserver.service
 [Unit]
 Description=Nginx API address server
 After=docker.service
